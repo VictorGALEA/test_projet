@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Récupération du nom d'hôte actuel
+actualHostname=$(hostname)
+
+# Création ou modification du nom d'hôte
+while true; do
+  read -p "Entrez le nom d'hôte de la VM : " hostname
+  if [ "$hostname" = "$actualHostname" ]; then
+    echo "C'est le même nom, Banane !"
+  else
+    break
+  fi
+done
+
+# Demande de créer un utilisateur
+while true; do
+  read -p "Entrez le nom d'utilisateur : " username
+  if id "$username" &>/dev/null; then
+    echo "L'utilisateur '$username' existe déjà. Veuillez en choisir un autre."
+  else
+    break
+  fi
+done
+
+attempts=1
+
+# Demande de renseigner un mot de passe
+while [ "$attempts" -le 3 ]; do
+  read -s -p "Entrez le mot de passe (au moins 8 caractères, au moins une majuscule, au moins un chiffre et au moins un caractère spécial) : " mdp
+  echo
+
+  # Vérification de la politique du mot de passe
+  if [[ "$mdp" =~ (.*[A-Z].*) && (.*[\!\@\#\$\%\^\&\*\(\)\_\+\-\=].*) && (.*[0-9].*) && (.{8,}) ]]; then
+
+    # Demande de confirmer le mot de passe
+    read -s -p "Confirmez le mot de passe : " confirmation
+    echo
+
+    # Vérification de la correspondance avec la confirmation
+    if [ "$mdp" = "$confirmation" ]; then
+
+      # Création hote et user
+      sudo hostnamectl set-hostname "$hostname"
+      sudo useradd -m "$username"
+      sudo passwd "$username" <<<"$mdp"
+      echo "Nom d'hôte '$hostname' créé avec succès."
+      echo "L'utilisateur '$username' a été créé avec succès."
+      
+      exit 0
+
+    else
+      echo "Erreur : Les mots de passe ne correspondent pas. Tentative $attempts/3."
+    fi
+  else
+    echo "Erreur : Le mot de passe ne respecte pas la politique. Veuillez réessayer. Tentative $attempts/3."
+  fi
+
+  attempts=$((attempts + 1))
+done
+
+echo "Impossible de configurer la machine '$hostname' et '$username' non créés."
+exit 1
