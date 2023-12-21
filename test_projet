@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+
+host_settings () {
+
 # Récupération du nom d'hôte actuel
 actualHostname=$(hostname)
 
@@ -9,9 +13,16 @@ while true; do
   if [ "$hostname" = "$actualHostname" ]; then
     echo "C'est le même nom, Banane !"
   else
+    sudo hostnamectl set-hostname "$hostname"
+    echo "Nom d'hôte '$hostname' créé avec succès."
     break
   fi
 done
+
+}
+
+
+user_settings () {
 
 # Demande de créer un utilisateur
 while true; do
@@ -41,10 +52,10 @@ while [ "$attempts" -le 3 ]; do
     if [ "$mdp" = "$confirmation" ]; then
 
       # Création hote et user
-      sudo hostnamectl set-hostname "$hostname"
+
       sudo useradd -m "$username"
       sudo passwd "$username" <<<"$mdp"
-      echo "Nom d'hôte '$hostname' créé avec succès."
+
       echo "L'utilisateur '$username' a été créé avec succès."
       
       exit 0
@@ -61,3 +72,5 @@ done
 
 echo "Impossible de configurer la machine '$hostname' et '$username' non créés."
 exit 1
+
+}
